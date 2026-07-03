@@ -1,0 +1,210 @@
+openapi: 3.0.3
+info:
+  title: Spond Club Registration API
+  description: Public API for viewing a club signup form and submitting registrations.
+  version: 1.0.0
+
+paths:
+  /api/forms/{formId}:
+    get:
+      tags:
+        - SignupForms
+      operationId: getSignupForm
+      summary: Get public signup form details
+      parameters:
+        - name: formId
+          in: path
+          required: true
+          description: Public identifier for the signup form.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Public signup form details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicSignupForm"
+        "404":
+          description: Form not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /api/forms/{formId}/submissions:
+    post:
+      tags:
+        - SignupRegistrations
+      operationId: submitSignupForm
+      summary: Submit a club signup registration
+      parameters:
+        - name: formId
+          in: path
+          required: true
+          description: Public identifier for the signup form.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRegistrationRequest"
+      responses:
+        "201":
+          description: Registration submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationSubmissionResponse"
+        "400":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        "404":
+          description: Form not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+components:
+  schemas:
+    PublicSignupForm:
+      type: object
+      required:
+        - clubId
+        - memberTypes
+        - formId
+        - title
+        - registrationOpens
+      properties:
+        clubId:
+          type: string
+          example: britsport
+        memberTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberType"
+        formId:
+          type: string
+          example: B171388180BC457D9887AD92B6CCFC86
+        title:
+          type: string
+          example: Coding camp summer 2025
+        description:
+          type: string
+          example: Coding camp summer 2025 signup form
+        registrationOpens:
+          type: string
+          format: date-time
+          example: "2024-12-16T00:00:00Z"
+
+    MemberType:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          example: 8FE4113D4E4020E0DCF887803A886981
+        name:
+          type: string
+          example: Active Member
+
+    CreateRegistrationRequest:
+      type: object
+      required:
+        - memberTypeId
+        - firstName
+        - lastName
+        - email
+        - phoneNumber
+        - birthDate
+      properties:
+        memberTypeId:
+          type: string
+          example: 8FE4113D4E4020E0DCF887803A886981
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+          minLength: 1
+        phoneNumber:
+          type: string
+          minLength: 1
+        birthDate:
+          type: string
+          format: date
+
+    RegistrationSubmissionResponse:
+      type: object
+      required:
+        - formId
+        - submitted
+      properties:
+        formId:
+          type: string
+          example: B171388180BC457D9887AD92B6CCFC86
+        submitted:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Registration submitted successfully.
+
+    ApiError:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: Form not found
+
+    ValidationError:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: Validation failed
+        fieldErrors:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldError"
+
+    FieldError:
+      type: object
+      required:
+        - field
+        - message
+      properties:
+        field:
+          type: string
+          example: email
+        message:
+          type: string
+          example: must be a valid email address
