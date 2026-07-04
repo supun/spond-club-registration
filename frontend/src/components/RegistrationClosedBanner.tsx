@@ -1,4 +1,7 @@
 import { Alert, AlertTitle, Container, Typography } from "@mui/material";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 import { PublicSignupForm } from "../types/api";
 
 interface Props {
@@ -6,12 +9,7 @@ interface Props {
 }
 
 export const RegistrationClosedBanner = ({ form }: Props) => {
-  const opensDate = new Date(form.registrationOpens);
-  const formatted = opensDate.toLocaleString(undefined, {
-    dateStyle: "long",
-    timeStyle: "short",
-  });
-
+  const formatted = dayjs.utc(form.registrationOpens).format("D MMMM YYYY [at] HH:mm");
   return (
     <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 }, px: { xs: 2, sm: 3 } }}>
       <Alert severity="info" variant="outlined">
