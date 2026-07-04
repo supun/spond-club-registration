@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   Stepper,
   Step,
@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Paper,
-  Alert,
   useMediaQuery,
   useTheme,
   CircularProgress,
@@ -15,11 +14,18 @@ import { PublicSignupForm } from "../../types/api";
 import { StepMemberType } from "./StepMemberType";
 import { StepUserInfo } from "./StepUserInfo";
 import { StepPreview } from "./StepPreview";
-import { FormValues, FormErrors, validateStep1, validateStep2 } from "../../utils/validation";
+import { FormValues } from "../../utils/validation";
 import { useSubmitRegistration } from "../../hooks/useSubmitRegistration";
 import { RegistrationSuccessBanner } from "../RegistrationSuccessBanner";
+import { useState } from "react";
 
 const STEPS = ["Member Type", "Your Information", "Review & Submit"];
+
+const STEP_FIELDS: (keyof FormValues)[][] = [
+  ["memberTypeId"],
+  ["firstName", "lastName", "email", "phoneNumber", "birthDate"],
+  [],
+];
 
 interface Props {
   form: PublicSignupForm;
@@ -28,52 +34,42 @@ interface Props {
 export const SignupWizard = ({ form }: Props) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
   const [activeStep, setActiveStep] = useState(0);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [values, setValues] = useState<FormValues>({
-    memberTypeId: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    phoneNumber: "",
-    birthDate: "",
+
+  const {
+    control,
+    handleSubmit,
+    trigger,
+    getValues,
+    formState: { errors },
+  } = useForm<FormValues>({
+    mode: "onChange",
+    defaultValues: {
+      memberTypeId: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      phoneNumber: "",
+      birthDate: "",
+    },
   });
 
   const { submit, submitting, validationError, success } = useSubmitRegistration(form.formId);
 
-  const setField = <K extends keyof FormValues>(field: K, value: FormValues[K]) => {
-    setValues((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const handleNext = () => {
-    if (activeStep === 0) {
-      const stepErrors = validateStep1(values);
-      setErrors(stepErrors);
-      if (Object.keys(stepErrors).length > 0) return;
-    }
-
-    if (activeStep === 1) {
-      const stepErrors = validateStep2(values);
-      setErrors(stepErrors);
-      if (Object.keys(stepErrors).length > 0) return;
-    }
-
+  const handleNext = async () => {
+    const valid = await trigger(STEP_FIELDS[activeStep]);
+    if (!valid) return;
     setActiveStep((prev) => prev + 1);
   };
 
   const handleBack = () => setActiveStep((prev) => prev - 1);
 
-  const handleSubmit = () => {
+  const onSubmit = (values: FormValues) => {
     submit(values);
   };
 
   if (success) {
-      return <RegistrationSuccessBanner />;
-    ;
+    return <RegistrationSuccessBanner />;
   }
 
   return (
@@ -99,25 +95,10 @@ export const SignupWizard = ({ form }: Props) => {
       </Stepper>
 
       <Box sx={{ minHeight: 240 }}>
-        {activeStep === 0 && (
-          <StepMemberType
-            form={form}
-            memberTypeId={values.memberTypeId}
-            onChange={(v) => setField("memberTypeId", v)}
-            errors={errors}
-          />
-        )}
-
-        {activeStep === 1 && (
-          <StepUserInfo
-            values={values}
-            onChange={(field, v) => setField(field, v)}
-            errors={errors}
-          />
-        )}
-
+        {activeStep === 0 && <StepMemberType form={form} control={control} errors={errors} />}
+        {activeStep === 1 && <StepUserInfo control={control} errors={errors} />}
         {activeStep === 2 && (
-          <StepPreview form={form} values={values} validationError={validationError} />
+          <StepPreview form={form} values={getValues()} validationError={validationError} />
         )}
       </Box>
 
@@ -130,14 +111,9 @@ export const SignupWizard = ({ form }: Props) => {
           mt: 4,
         }}
       >
-        <Button
-          onClick={handleBack}
-          disabled={activeStep === 0 || submitting}
-          fullWidth={isMobile}
-        >
+        <Button onClick={handleBack} disabled={activeStep === 0 || submitting} fullWidth={isMobile}>
           Back
         </Button>
-
         {activeStep < STEPS.length - 1 ? (
           <Button variant="contained" onClick={handleNext} fullWidth={isMobile}>
             Next
@@ -145,7 +121,7 @@ export const SignupWizard = ({ form }: Props) => {
         ) : (
           <Button
             variant="contained"
-            onClick={handleSubmit}
+            onClick={handleSubmit(onSubmit)}
             disabled={submitting}
             fullWidth={isMobile}
           >

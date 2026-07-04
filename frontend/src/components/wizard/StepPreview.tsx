@@ -28,7 +28,11 @@ export const StepPreview = ({ form, values, validationError }: Props) => {
       <Typography variant="h6">Review your information</Typography>
 
       {validationError && (
-        <Alert severity="error">{validationError?.fieldErrors?.[0].message}</Alert>
+        <Alert severity="error">
+          {validationError.fieldErrors?.[0]?.message ??
+            validationError.message ??
+            "Something went wrong."}
+        </Alert>
       )}
 
       <Box>
