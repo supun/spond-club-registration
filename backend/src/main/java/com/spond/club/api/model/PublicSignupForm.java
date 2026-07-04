@@ -1,7 +1,6 @@
 package com.spond.club.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.spond.club.membership.api.model.MemberType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Generated;
 import jakarta.validation.Valid;
