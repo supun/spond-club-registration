@@ -3,7 +3,7 @@
 ## Stack
 
 - Backend: Java 21, Spring Boot, Spring Data JPA, Flyway, PostgreSQL, MapStruct
-- Frontend: React, TypeScript, Vite, MUI, Zod, Playwright
+- Frontend: React, TypeScript, Vite, MUI, Zod, Playwright, React form hook
 - Local infrastructure: Docker Compose
 
 ## Technology Choices
